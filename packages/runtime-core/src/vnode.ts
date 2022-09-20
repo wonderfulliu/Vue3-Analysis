@@ -401,6 +401,7 @@ const normalizeRef = ({
   ) as any
 }
 
+// 返回虚拟节点，是个对象
 function createBaseVNode(
   type: VNodeTypes | ClassComponent | typeof NULL_DYNAMIC_COMPONENT,
   props: (Data & VNodeProps) | null = null,

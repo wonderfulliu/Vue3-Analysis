@@ -178,7 +178,10 @@ export function createAppAPI<HostElement>(
   render: RootRenderFunction<HostElement>,
   hydrate?: RootHydrateFunction
 ): CreateAppFunction<HostElement> {
+  // 用户创建的 App 实例是这个函数生成的
+  // Vue 工作流程：组件 => 组件实例 => render() => vnode => patch() => dom
   return function createApp(rootComponent, rootProps = null) {
+    // 如果传入的是配置项，则将配置项赋值给rootComponent
     if (!isFunction(rootComponent)) {
       rootComponent = { ...rootComponent }
     }
@@ -193,6 +196,7 @@ export function createAppAPI<HostElement>(
 
     let isMounted = false
 
+    // 创建一个 app 的代码
     const app: App = (context.app = {
       _uid: uid++,
       _component: rootComponent as ConcreteComponent,
@@ -279,10 +283,12 @@ export function createAppAPI<HostElement>(
       },
 
       mount(
+        // 宿主元素
         rootContainer: HostElement,
         isHydrate?: boolean,
         isSVG?: boolean
       ): any {
+        // 首次执行，并未挂载
         if (!isMounted) {
           // #5571
           if (__DEV__ && (rootContainer as any).__vue_app__) {
@@ -292,12 +298,33 @@ export function createAppAPI<HostElement>(
                 ` you need to unmount the previous app by calling \`app.unmount()\` first.`
             )
           }
+          // 创建根组件 vnode，是个对象，执行createVNode后，传入的html模板就转为vnode了
           const vnode = createVNode(
             rootComponent as ConcreteComponent,
             rootProps
           )
           // store app context on the root VNode.
           // this will be set on the root instance on initial mount.
+          // vnode上新增appContext配置项，包括
+          /* return {
+              app: null as any,
+              config: {
+                isNativeTag: NO,
+                performance: false,
+                globalProperties: {},
+                optionMergeStrategies: {},
+                errorHandler: undefined,
+                warnHandler: undefined,
+                compilerOptions: {}
+              },
+              mixins: [],
+              components: {},
+              directives: {},
+              provides: Object.create(null),
+              optionsCache: new WeakMap(),
+              propsCache: new WeakMap(),
+              emitsCache: new WeakMap()
+            } */
           vnode.appContext = context
 
           // HMR root reload
@@ -310,6 +337,7 @@ export function createAppAPI<HostElement>(
           if (isHydrate && hydrate) {
             hydrate(vnode as VNode<Node, Element>, rootContainer as any)
           } else {
+            // 渲染 vnode => dom => rootContainer
             render(vnode, rootContainer, isSVG)
           }
           isMounted = true

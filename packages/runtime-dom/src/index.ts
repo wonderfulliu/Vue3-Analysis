@@ -39,6 +39,7 @@ let renderer: Renderer<Element | ShadowRoot> | HydrationRenderer
 
 let enabledHydration = false
 
+// 单例模式：renderer存在则返回renderer，不存在则赋值并返回
 function ensureRenderer() {
   return (
     renderer ||
@@ -64,24 +65,31 @@ export const hydrate = ((...args) => {
 }) as RootHydrateFunction
 
 export const createApp = ((...args) => {
+  //  1、返回一个 app 实例
   const app = ensureRenderer().createApp(...args)
 
+  // 2、判断当前执行环境
   if (__DEV__) {
     injectNativeTagCheck(app)
     injectCompilerOptionsCheck(app)
   }
 
+  //  3、将 app 实例挂载
   const { mount } = app
+  // 将app实例的mount方法重写
   app.mount = (containerOrSelector: Element | ShadowRoot | string): any => {
+    // container是传入的选择器查找到的挂载元素
     const container = normalizeContainer(containerOrSelector)
     if (!container) return
-
+    // 此时component还是初始化时传入的配置项
     const component = app._component
+    // 如果component是配置项且没有render属性且没有template属性，则手动给component配置项添加template属性
     if (!isFunction(component) && !component.render && !component.template) {
       // __UNSAFE__
       // Reason: potential execution of JS expressions in in-DOM template.
       // The user must make sure the in-DOM template is trusted. If it's
       // rendered by the server, the template should not contain any user data.
+      // container.innerHTML是模板字符串，赋值给传入的配置项后，在挂在前会清空原始元素的子元素
       component.template = container.innerHTML
       // 2.x compat check
       if (__COMPAT__ && __DEV__) {
@@ -100,6 +108,7 @@ export const createApp = ((...args) => {
 
     // clear content before mounting
     container.innerHTML = ''
+    // 
     const proxy = mount(container, false, container instanceof SVGElement)
     if (container instanceof Element) {
       container.removeAttribute('v-cloak')
@@ -108,6 +117,7 @@ export const createApp = ((...args) => {
     return proxy
   }
 
+  // 返回 app 实例
   return app
 }) as CreateAppFunction<Element>
 
@@ -180,6 +190,7 @@ function injectCompilerOptionsCheck(app: App) {
 function normalizeContainer(
   container: Element | ShadowRoot | string
 ): Element | null {
+  // 如果是选择器，则查找该元素
   if (isString(container)) {
     const res = document.querySelector(container)
     if (__DEV__ && !res) {

@@ -352,8 +352,11 @@ function baseCreateRenderer(
   // Note: functions inside this closure should use `const xxx = () => {}`
   // style in order to prevent being inlined by minifiers.
   const patch: PatchFn = (
+    // 老节点
     n1,
+    // 新节点
     n2,
+    // 容器
     container,
     anchor = null,
     parentComponent = null,
@@ -1150,6 +1153,7 @@ function baseCreateRenderer(
     }
   }
 
+  // patch组件
   const processComponent = (
     n1: VNode | null,
     n2: VNode,
@@ -1200,7 +1204,9 @@ function baseCreateRenderer(
     // mounting
     const compatMountInstance =
       __COMPAT__ && initialVNode.isCompatRoot && initialVNode.component
-    const instance: ComponentInternalInstance =
+    
+      // 1. 创建组件实例：
+      const instance: ComponentInternalInstance =
       compatMountInstance ||
       (initialVNode.component = createComponentInstance(
         initialVNode,
@@ -1227,6 +1233,11 @@ function baseCreateRenderer(
       if (__DEV__) {
         startMeasure(instance, `init`)
       }
+
+      /*
+        2. 初始化组件实例
+        初始化组件的 props、slots、setup 等将需要 proxy 代理的数据做好准备，以及将 template 进行编译为 render
+      */
       setupComponent(instance)
       if (__DEV__) {
         endMeasure(instance, `init`)
@@ -1247,6 +1258,14 @@ function baseCreateRenderer(
       return
     }
 
+    /*
+      3. 创建更新机制
+      获取 vnode
+      1. 创建一个组件更新机制
+        1.1 render 获取 vnode
+        1.2 patch(oldvnode, vnode)
+      2. 创建更新机制：new ReactiveEffect(更新函数)
+    */
     setupRenderEffect(
       instance,
       initialVNode,
@@ -1306,6 +1325,8 @@ function baseCreateRenderer(
     isSVG,
     optimized
   ) => {
+
+    // 创建组件更新函数
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         let vnodeHook: VNodeHook | null | undefined
@@ -1550,6 +1571,7 @@ function baseCreateRenderer(
     }
 
     // create reactive effect for rendering
+    // 2. 创建更新机制
     const effect = (instance.effect = new ReactiveEffect(
       componentUpdateFn,
       () => queueJob(update),
@@ -1572,6 +1594,7 @@ function baseCreateRenderer(
       update.ownerInstance = instance
     }
 
+    // 3. 首次执行组件更新
     update()
   }
 
@@ -2323,14 +2346,20 @@ function baseCreateRenderer(
     return hostNextSibling((vnode.anchor || vnode.el)!)
   }
 
+  /* 
+    vnode：生成的虚拟节点，对象
+    container：要挂载的节点
+  */
   const render: RootRenderFunction = (vnode, container, isSVG) => {
     if (vnode == null) {
       if (container._vnode) {
         unmount(container._vnode, null, null, true)
       }
     } else {
+      // 首次执行，参数1是null
       patch(container._vnode || null, vnode, container, null, null, null, isSVG)
     }
+    // ？？？
     flushPreFlushCbs()
     flushPostFlushCbs()
     container._vnode = vnode
@@ -2357,9 +2386,13 @@ function baseCreateRenderer(
     )
   }
 
+  // 返回渲染器对象
   return {
+    // 把接收到的 vnode 转换成 dom，并追加到宿主元素
     render,
+    // SSR，服务端将一个 vnode 生成 html
     hydrate,
+    // 返回 app 实例
     createApp: createAppAPI(render, hydrate)
   }
 }

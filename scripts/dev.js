@@ -3,12 +3,18 @@
 // smaller files w/ better tree-shaking.
 
 // @ts-check
+// js代码打包压缩工具
 const { build } = require('esbuild')
 const nodePolyfills = require('@esbuild-plugins/node-modules-polyfill')
 const { resolve, relative } = require('path')
+// process.argv：scripts 脚本参数
+// 获取命令行传入的参数（第二个到最后的所有参数）
 const args = require('minimist')(process.argv.slice(2))
 
+// 命令行中所有没有 - 的参数都会放在 _ 这个数组里面
+// target是设置打包目标（对哪个文件夹进行打包），如果命令行中没有传入任何参数，则默认使用vue包
 const target = args._[0] || 'vue'
+// 设置打包的格式：cjs，esm等
 const format = args.f || 'global'
 const inlineDeps = args.i || args.inline
 const pkg = require(resolve(__dirname, `../packages/${target}/package.json`))
@@ -20,10 +26,12 @@ const outputFormat = format.startsWith('global')
   ? 'cjs'
   : 'esm'
 
+// vue的版本类型
 const postfix = format.endsWith('-runtime')
   ? `runtime.${format.replace(/-runtime$/, '')}`
   : format
 
+// 输出的打包后的vue文件名
 const outfile = resolve(
   __dirname,
   `../packages/${target}/dist/${
@@ -69,10 +77,12 @@ if (!inlineDeps) {
 }
 
 build({
+  // 入口文件
   entryPoints: [resolve(__dirname, `../packages/${target}/src/index.ts`)],
   outfile,
   bundle: true,
   external,
+  // 配置 sourcemap
   sourcemap: true,
   format: outputFormat,
   globalName: pkg.buildOptions?.name,

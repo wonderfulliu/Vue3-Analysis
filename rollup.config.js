@@ -19,6 +19,7 @@ const name = packageOptions.filename || path.basename(packageDir)
 // ensure TS checks only once for each build
 let hasTSChecked = false
 
+// 打包选项
 const outputConfigs = {
   'esm-bundler': {
     file: resolve(`dist/${name}.esm-bundler.js`),

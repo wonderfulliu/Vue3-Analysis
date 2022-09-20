@@ -1,5 +1,6 @@
 // This entry exports the runtime only, and is built as
 // `dist/vue.esm-bundler.js` which is used by default for bundlers.
+// 此入口文件没有打包编译器，不能编译vue模板
 import { initDev } from './dev'
 import { warn } from '@vue/runtime-dom'
 
